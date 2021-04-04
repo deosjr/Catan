@@ -85,6 +85,15 @@ func (b board) resourceProduction(diceRoll int) map[color]resources {
 	return res
 }
 
+func (b board) receiveStartingResources(v hexvertex) resources {
+    res := newResources()
+    for _, c := range v.hexAdjacent() {
+        tile := b.tiles[c]
+        res[int(tile.terrain)-1] += 1
+    }
+    return res
+}
+
 func (b board) build(color color, pt piecetype, v hexvertex) {
     b.intersections[v] = piece{color, pt}
 }

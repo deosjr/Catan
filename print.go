@@ -108,7 +108,7 @@ func (b board) printTileTopEdges(c hexcoord) {
 		fmt.Print("   ")
 	}
 	if road, ok := b.paths[top.RightEdge()]; ok {
-		road.getColor().Print(" \\ ")
+		road.getColor().Print("  \\")
 	} else {
 		fmt.Print("   ")
 	}

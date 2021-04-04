@@ -108,6 +108,18 @@ func (v hexvertex) DownEdge() hexedge {
 	return hexedge{c: v.c.DownRight(), left: true}
 }
 
+func (v hexvertex) hexAdjacent() []hexcoord {
+    adjacent := []hexcoord{v.c}
+    if v.top {
+        adjacent = append(adjacent, v.c.UpLeft())
+        adjacent = append(adjacent, v.c.UpRight())
+    } else {
+        adjacent = append(adjacent, v.c.DownLeft())
+        adjacent = append(adjacent, v.c.DownRight())
+    }
+    return adjacent
+}
+
 // similarly for edges, we use the upper left half of each hex
 type hexedge struct {
 	c hexcoord
