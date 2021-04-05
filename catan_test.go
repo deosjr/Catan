@@ -1,6 +1,7 @@
 package main
 
 import (
+    "fmt"
 	"reflect"
 	"testing"
 )
@@ -65,7 +66,7 @@ func TestResourceProduction(t *testing.T) {
 			},
 		},
 	} {
-        players := []player{newPlayer(red), newPlayer(white), newPlayer(blue), newPlayer(yellow)}
+        players := []*player{newPlayer(red), newPlayer(white), newPlayer(blue), newPlayer(yellow)}
         game := game{board:tt.board, bank:tt.bank, players:players}
 		game.resourceProduction(tt.roll)
         for _, p := range game.players {
@@ -151,8 +152,23 @@ func TestTrade(t *testing.T) {
 	}
 }
 
-func TestBuild(t *testing.T) {
-	for i, tt := range []struct{}{} {
-		t.Logf("%d) TODO %v", i, tt)
-	}
+func TestBuildSettlement(t *testing.T) {
+	for i, tt := range []struct {
+        board board
+        player *player
+        vertex hexvertex
+		want   error
+	}{
+		{
+            board: illustrationA(),
+            player: &player{color: red, hand: newResources()},
+            vertex: hexvertex{c:hexcoord{-2,0,2}, top:true},
+            want: fmt.Errorf("player cant pay cost"),
+        },
+    }{
+		got := tt.board.buildSettlement(tt.player, tt.vertex)
+		if !reflect.DeepEqual(got, tt.want) {
+			t.Errorf("%d) got %v want %v", i, got, tt.want)
+		}
+    }
 }

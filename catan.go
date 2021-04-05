@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type terrain uint8
 
 const (
@@ -50,6 +52,15 @@ func (r resources) sub(rr resources) resources {
     return r
 }
 
+func (r resources) covers(cost resources) bool {
+    for i, v := range cost {
+        if r[i] < v {
+            return false
+        }
+    }
+    return true
+}
+
 type tile struct {
 	terrain terrain
 	number  int
@@ -69,6 +80,18 @@ const (
 	city
 	road
 )
+
+func (p piecetype) cost() resources {
+    switch p {
+    case settlement:
+        return resources([]int{1,1,1,0,1})
+    case city:
+        return resources([]int{0,0,0,3,2})
+    case road:
+        return resources([]int{1,0,1,0,0})
+    }
+    return newResources()
+}
 
 type board struct {
 	tiles         map[hexcoord]tile
@@ -116,8 +139,39 @@ func (b board) receiveStartingResources(v hexvertex) resources {
     return res
 }
 
-func (b board) build(color color, pt piecetype, v hexvertex) {
-    b.intersections[v] = piece{color, pt}
+func (b board) buildSettlement(player *player, v hexvertex) error {
+    if !player.hand.covers(settlement.cost()) {
+        return fmt.Errorf("player cant pay cost")
+    }
+    if _, ok := b.intersections[v]; ok {
+        return fmt.Errorf("intersection already built")
+    }
+    // TODO: distance rule
+    b.intersections[v] = piece{player.color, settlement}
+    return nil
+}
+
+func (b board) buildCity(player *player, v hexvertex) error {
+    if !player.hand.covers(city.cost()) {
+        return fmt.Errorf("player cant pay cost")
+    }
+    p, ok := b.intersections[v]
+    if!ok || p.piecetype != settlement || p.color != player.color {
+        return fmt.Errorf("intersection does not contain settlement of player's color")
+    }
+    b.intersections[v] = piece{player.color, city}
+    return nil
+}
+
+func (b board) buildRoad(player *player, e hexedge) error {
+    if !player.hand.covers(road.cost()) {
+        return fmt.Errorf("player cant pay cost")
+    }
+    if _, ok := b.paths[e]; ok {
+        return fmt.Errorf("road already built")
+    }
+    b.paths[e] = piece{player.color, road}
+    return nil
 }
 
 type devcards struct{}
@@ -140,8 +194,8 @@ type player struct {
 	piecesReserve pieces
 }
 
-func newPlayer(color color) player {
-    return player{
+func newPlayer(color color) *player {
+    return &player{
         color: color,
         hand: newResources(),
     }
@@ -149,7 +203,7 @@ func newPlayer(color color) player {
 
 type game struct {
 	board       board
-	players     []player
+	players     []*player
 	longestRoad int
 	largestArmy int
 	bank        resources
