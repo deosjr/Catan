@@ -34,6 +34,90 @@ func TestResourceProduction(t *testing.T) {
 				yellow: []int{0, 0, 0, 0, 0},
 			},
 		},
+        // bank does not have enough wool
+		{
+			roll:  5,
+			board: illustrationA(),
+			bank:  []int{10, 10, 10, 10, 1},
+			want: map[color]resources{
+				red:    []int{0, 0, 0, 0, 0},
+				blue:   []int{1, 0, 0, 0, 0},
+				white:  []int{0, 0, 0, 0, 0},
+				yellow: []int{0, 0, 0, 0, 0},
+			},
+		},
+        // bank does not have enough brick 
+		{
+			roll:  5,
+			board: func(b board) board {
+                // replace all settlements with cities
+                for c, p := range b.intersections {
+                    b.intersections[c] = piece{color:p.color, piecetype:city}
+                }
+                return b
+            }(illustrationA()),
+			bank:  []int{1, 10, 10, 10, 10},
+			want: map[color]resources{
+				red:    []int{0, 0, 0, 0, 0},
+				blue:   []int{1, 0, 0, 0, 2},
+				white:  []int{0, 0, 0, 0, 2},
+				yellow: []int{0, 0, 0, 0, 0},
+			},
+		},
+	} {
+        players := []player{newPlayer(red), newPlayer(white), newPlayer(blue), newPlayer(yellow)}
+        game := game{board:tt.board, bank:tt.bank, players:players}
+		game.resourceProduction(tt.roll)
+        for _, p := range game.players {
+		    if !reflect.DeepEqual(p.hand, tt.want[p.color]) {
+			    t.Errorf("%d) got %v want %v", i, p.hand, tt.want[p.color])
+		    }
+        }
+	}
+}
+
+func TestRawResourceProduction(t *testing.T) {
+	for i, tt := range []struct {
+		roll  int
+		board board
+		want  map[color]resources
+	}{
+		{
+			roll:  5,
+			board: illustrationA(),
+			want: map[color]resources{
+				red:    []int{0, 0, 0, 0, 0},
+				blue:   []int{1, 0, 0, 0, 1},
+				white:  []int{0, 0, 0, 0, 1},
+				yellow: []int{0, 0, 0, 0, 0},
+			},
+		},
+		{
+			roll:  8,
+			board: illustrationA(),
+			want: map[color]resources{
+				red:    []int{0, 0, 1, 0, 0},
+				blue:   []int{0, 0, 1, 0, 0},
+				white:  []int{0, 0, 0, 1, 0},
+				yellow: []int{0, 0, 0, 0, 0},
+			},
+		},
+		{
+			roll:  5,
+			board: func(b board) board {
+                // replace all settlements with cities
+                for c, p := range b.intersections {
+                    b.intersections[c] = piece{color:p.color, piecetype:city}
+                }
+                return b
+            }(illustrationA()),
+			want: map[color]resources{
+				red:    []int{0, 0, 0, 0, 0},
+				blue:   []int{2, 0, 0, 0, 2},
+				white:  []int{0, 0, 0, 0, 2},
+				yellow: []int{0, 0, 0, 0, 0},
+			},
+		},
 	} {
 		got := tt.board.resourceProduction(tt.roll)
 		if !reflect.DeepEqual(got, tt.want) {

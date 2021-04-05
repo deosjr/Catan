@@ -11,6 +11,10 @@ const (
 	pasture
 )
 
+func (t terrain) toIndex() int {
+    return int(t)-1
+}
+
 type resources []int
 
 type resource uint8
@@ -24,8 +28,26 @@ const (
 	wool
 )
 
+func (r resource) toIndex() int {
+    return int(r)-1
+}
+
 func newResources() resources {
 	return make([]int, 5, 5)
+}
+
+func (r resources) add(rr resources) resources {
+    for i, v := range rr {
+        r[i] += v
+    }
+    return r
+}
+
+func (r resources) sub(rr resources) resources {
+    for i, v := range rr {
+        r[i] -= v
+    }
+    return r
 }
 
 type tile struct {
@@ -56,7 +78,7 @@ type board struct {
 }
 
 func (b board) resourceProduction(diceRoll int) map[color]resources {
-	res := map[color]resources{
+	resPerPlayer := map[color]resources{
 		red:    newResources(),
 		white:  newResources(),
 		blue:   newResources(),
@@ -76,20 +98,20 @@ func (b board) resourceProduction(diceRoll int) map[color]resources {
 			}
 			switch piece.piecetype {
 			case settlement:
-				res[piece.color][int(t.terrain)-1] += 1
+				resPerPlayer[piece.color][t.terrain.toIndex()] += 1
 			case city:
-				res[piece.color][int(t.terrain)-1] += 2
+				resPerPlayer[piece.color][t.terrain.toIndex()] += 2
 			}
 		}
 	}
-	return res
+	return resPerPlayer
 }
 
 func (b board) receiveStartingResources(v hexvertex) resources {
     res := newResources()
     for _, c := range v.hexAdjacent() {
         tile := b.tiles[c]
-        res[int(tile.terrain)-1] += 1
+        res[tile.terrain.toIndex()] += 1
     }
     return res
 }
@@ -118,10 +140,48 @@ type player struct {
 	piecesReserve pieces
 }
 
+func newPlayer(color color) player {
+    return player{
+        color: color,
+        hand: newResources(),
+    }
+}
+
 type game struct {
 	board       board
 	players     []player
 	longestRoad int
 	largestArmy int
 	bank        resources
+}
+
+func (g game) resourceProduction(roll int) {
+    raw := g.board.resourceProduction(roll)
+    total := newResources()
+    for _, res := range raw {
+        total.add(res)
+    }
+    for i, r := range total {
+        if g.bank[i] < r {
+            // bank does not have enough resource cards
+            numPlayers := 0
+            for _, res := range raw {
+                if res[i] > 0 {
+                    numPlayers++
+                }
+            }
+            for _, res := range raw {
+                // only one player gets this resource: gets all remaining cards in bank
+                if numPlayers == 1 && res[i] > 0 {
+                    res[i] = g.bank[i]
+                // multiple players would receive resource: no one gets any cards
+                } else {
+                    res[i] = 0
+                }
+            }
+        }
+    }
+    for _, p := range g.players {
+        p.hand.add(raw[p.color])
+    }
 }
