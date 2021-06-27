@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+    "fmt"
+    "strings"
+)
 
 type terrain uint8
 
@@ -29,6 +32,17 @@ const (
 	ore
 	wool
 )
+
+func (r resource) String() string {
+    switch r {
+    case brick: return "brick"
+    case grain: return "grain"
+    case lumber: return "lumber"
+    case ore: return "ore"
+    case wool: return "wool"
+    }
+    return "wrong resource"
+}
 
 func (r resource) toIndex() int {
     return int(r)-1
@@ -59,6 +73,21 @@ func (r resources) covers(cost resources) bool {
         }
     }
     return true
+}
+
+func (r resources) isEmpty() bool {
+    return newResources().covers(r)
+}
+
+func (r resources) String() string {
+    s := []string{}
+    for i, v := range r {
+        if v == 0 {
+            continue
+        }
+        s = append(s, fmt.Sprintf("%d %s", v, resource(i+1)))
+    }
+    return strings.Join(s, ", ")
 }
 
 type tile struct {
@@ -189,6 +218,16 @@ const (
 	yellow
 )
 
+func (c color) String() string {
+    switch c {
+    case red: return "red"
+    case white: return "white"
+    case blue: return "blue"
+    case yellow: return "yellow"
+    }
+    return "wrong color"
+}
+
 type player struct {
 	color         color
 	hand          resources
@@ -206,13 +245,14 @@ func newPlayer(color color) *player {
 
 type game struct {
 	board       board
-	players     []*player
+    order       []color
+	players     map[color]*player
 	longestRoad int
 	largestArmy int
 	bank        resources
 }
 
-func (g game) resourceProduction(roll int) {
+func (g game) resourceProduction(roll int) map[color]resources {
     raw := g.board.resourceProduction(roll)
     total := newResources()
     for _, res := range raw {
@@ -238,7 +278,5 @@ func (g game) resourceProduction(roll int) {
             }
         }
     }
-    for _, p := range g.players {
-        p.hand.add(raw[p.color])
-    }
+    return raw
 }

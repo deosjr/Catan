@@ -66,13 +66,11 @@ func TestResourceProduction(t *testing.T) {
 			},
 		},
 	} {
-        players := []*player{newPlayer(red), newPlayer(white), newPlayer(blue), newPlayer(yellow)}
+        players := map[color]*player{red: newPlayer(red), white: newPlayer(white), blue: newPlayer(blue), yellow: newPlayer(yellow)}
         game := game{board:tt.board, bank:tt.bank, players:players}
-		game.resourceProduction(tt.roll)
-        for _, p := range game.players {
-		    if !reflect.DeepEqual(p.hand, tt.want[p.color]) {
-			    t.Errorf("%d) got %v want %v", i, p.hand, tt.want[p.color])
-		    }
+		got := game.resourceProduction(tt.roll)
+        if !reflect.DeepEqual(got, tt.want) {
+		    t.Errorf("%d) got %v want %v", i, got, tt.want)
         }
 	}
 }

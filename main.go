@@ -1,25 +1,25 @@
 package main
 
-import "fmt"
+//import "fmt"
 
 func main() {
 	board := illustrationA()
-    game := game{board:board, players:[]*player{newPlayer(red)}}
-    game.players[0].hand = game.players[0].hand.add([]int{1,1,1,3,3})
+    game := game{
+        board:board,
+        players:map[color]*player{
+            red: newPlayer(red),
+            blue: newPlayer(blue),
+            white: newPlayer(white),
+            yellow: newPlayer(yellow),
+        },
+        bank: resources([]int{19, 19, 19, 19, 19}),
+    }
+    game.players[red].hand = game.players[red].hand.add([]int{0,1,2,0,0})
+    game.players[blue].hand = game.players[blue].hand.add([]int{1,0,1,1,0})
+    game.players[white].hand = game.players[white].hand.add([]int{1,1,1,0,0})
+    game.players[yellow].hand = game.players[yellow].hand.add([]int{0,2,0,1,0})
 	board.print()
-    err := board.buildCity(game.players[0], hexvertex{hexcoord{0,0,0}, true})
-    if err != nil {
-        fmt.Println(err)
-    }
-    err = board.buildSettlement(game.players[0], hexvertex{hexcoord{0,0,0}, true})
-    if err != nil {
-        fmt.Println(err)
-    }
-    err = board.buildCity(game.players[0], hexvertex{hexcoord{0,0,0}, true})
-    if err != nil {
-        fmt.Println(err)
-    }
-	board.print()
+    loop(game)
 }
 
 // returns a full board as per illustration A of the base rules
