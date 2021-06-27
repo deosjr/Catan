@@ -119,6 +119,20 @@ func TestRawResourceProduction(t *testing.T) {
 				yellow: []int{0, 0, 0, 0, 0},
 			},
 		},
+		{
+			roll:  5,
+			board: func(b board) board {
+                // put the robber on the pasture 5
+                b.robber = hexcoord{1, -2, 1}
+                return b
+            }(illustrationA()),
+			want: map[color]resources{
+				red:    []int{0, 0, 0, 0, 0},
+				blue:   []int{1, 0, 0, 0, 0},
+				white:  []int{0, 0, 0, 0, 0},
+				yellow: []int{0, 0, 0, 0, 0},
+			},
+		},
 	} {
 		got := tt.board.resourceProduction(tt.roll)
 		if !reflect.DeepEqual(got, tt.want) {
@@ -161,6 +175,17 @@ func TestBuildSettlement(t *testing.T) {
 	}{
 		{
             board: illustrationA(),
+            player: &player{color: red, hand: settlement.cost()},
+            vertex: hexvertex{c:hexcoord{-2,0,2}, top:false},
+        },
+		{
+            board: illustrationA(),
+            player: &player{color: red, hand: settlement.cost()},
+            vertex: hexvertex{c:hexcoord{-2,0,2}, top:true},
+            want: fmt.Errorf("intersection already built"),
+        },
+		{
+            board: illustrationA(),
             player: &player{color: red, hand: newResources()},
             vertex: hexvertex{c:hexcoord{-2,0,2}, top:true},
             want: fmt.Errorf("player cant pay cost"),
@@ -170,5 +195,13 @@ func TestBuildSettlement(t *testing.T) {
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("%d) got %v want %v", i, got, tt.want)
 		}
+        if tt.want == nil {
+            // verify settlement was built if no error
+            p, ok := tt.board.intersections[tt.vertex]
+            wantPiece := piece{red, settlement}
+            if !ok || p != wantPiece {
+                t.Errorf("%d) got %v want red settlement", i, p)
+            }
+        }
     }
 }

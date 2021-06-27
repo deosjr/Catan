@@ -146,6 +146,7 @@ func (b board) buildSettlement(player *player, v hexvertex) error {
     if _, ok := b.intersections[v]; ok {
         return fmt.Errorf("intersection already built")
     }
+    player.hand = player.hand.sub(settlement.cost())
     // TODO: distance rule
     b.intersections[v] = piece{player.color, settlement}
     return nil
@@ -159,6 +160,7 @@ func (b board) buildCity(player *player, v hexvertex) error {
     if!ok || p.piecetype != settlement || p.color != player.color {
         return fmt.Errorf("intersection does not contain settlement of player's color")
     }
+    player.hand = player.hand.sub(city.cost())
     b.intersections[v] = piece{player.color, city}
     return nil
 }
@@ -170,6 +172,7 @@ func (b board) buildRoad(player *player, e hexedge) error {
     if _, ok := b.paths[e]; ok {
         return fmt.Errorf("road already built")
     }
+    player.hand = player.hand.sub(road.cost())
     b.paths[e] = piece{player.color, road}
     return nil
 }
